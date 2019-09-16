@@ -100,3 +100,31 @@ export const IssueList = styled.ul`
     }
   }
 `
+export const PaginateContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+
+  margin-top: 10px;
+`
+export const PaginateButton = styled.button.attrs(props => ({
+  type: 'button',
+  disabled: props.loading,
+}))`
+  background: #7159c1;
+  border: 0;
+  padding: 10px;
+  color: #fff;
+  margin-left: 15px;
+  border-radius: 4px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &[disabled] {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+`

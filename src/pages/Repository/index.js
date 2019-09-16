@@ -5,7 +5,13 @@ import PropTypes from 'prop-types'
 import api from '../../services/api'
 
 import Container from '../../components/Container'
-import { Loading, Owner, IssueList } from './styles'
+import {
+  Loading,
+  Owner,
+  IssueList,
+  PaginateContainer,
+  PaginateButton,
+} from './styles'
 export default class Repository extends Component {
   static propTypes = {
     match: PropTypes.shape({
@@ -19,19 +25,22 @@ export default class Repository extends Component {
     repository: {},
     issues: [],
     loading: true,
+    issueState: 'open',
+    page: 1,
   }
 
-  async componentDidMount() {
+  getRepoInfo = async () => {
     const { match } = this.props
-
+    const { issueState, page } = this.state
     const repoName = decodeURIComponent(match.params.repository)
 
     const [repository, issues] = await Promise.all([
       api.get(`/repos/${repoName}`),
       api.get(`/repos/${repoName}/issues`, {
         params: {
-          state: 'open',
+          state: issueState,
           per_page: 5,
+          page: page,
         },
       }),
     ])
@@ -44,8 +53,20 @@ export default class Repository extends Component {
     console.log(repository, issues)
   }
 
+  componentDidMount() {
+    this.getRepoInfo()
+  }
+
+  componentDidUpdate(_, prevState) {
+    const { issueState, page } = this.state
+
+    if (prevState.issueState !== issueState || prevState.page !== page) {
+      this.getRepoInfo()
+    }
+  }
+
   render() {
-    const { repository, issues, loading } = this.state
+    const { repository, issues, loading, page } = this.state
 
     if (loading) {
       return <Loading>Carregando</Loading>
@@ -57,6 +78,14 @@ export default class Repository extends Component {
           <img src={repository.owner.avatar_url} alt={repository.owner.login} />
           <h1>{repository.name}</h1>
           <p>{repository.description}</p>
+          <select
+            value={this.state.issueState}
+            onChange={e => this.setState({ issueState: e.target.value })}
+          >
+            <option value="all">Todos</option>
+            <option value="open">Abertos</option>
+            <option value="closed">Fechados</option>
+          </select>
         </Owner>
         <IssueList>
           {issues.map(issue => (
@@ -74,6 +103,17 @@ export default class Repository extends Component {
             </li>
           ))}
         </IssueList>
+        <PaginateContainer>
+          <PaginateButton
+            disabled={page === 1 ? 1 : 0}
+            onClick={() => this.setState({ page: page - 1 })}
+          >
+            Anterior
+          </PaginateButton>
+          <PaginateButton onClick={() => this.setState({ page: page + 1 })}>
+            Próximo
+          </PaginateButton>
+        </PaginateContainer>
       </Container>
     )
   }
